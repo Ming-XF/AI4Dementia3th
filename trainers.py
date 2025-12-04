@@ -3,6 +3,7 @@ import pywt
 import torch
 from einops import repeat, rearrange
 from scipy import signal
+import numpy as np
 
 from utils import *
 
@@ -693,32 +694,61 @@ class BrainVAETrainer(Trainer):
                   f"Epoch time = {(end_time - start_time):.3f}s"
             print(msg)
             logger.info(msg)
+            
+class STWeightTrainer(BrainVAETrainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(STWeightTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+            
+class EESTWTrainer(BrainVAETrainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(EESTWTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
 
 class SingleEncoderBVAETrainer(BrainVAETrainer):
     def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
         super(SingleEncoderBVAETrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
-            
-class STWeightTrainer(Trainer):
+
+class CVIBTrainer(Trainer):
     def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
-        super(STWeightTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+        super(CVIBTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
         
-    def prepare_inputs_kwargs(self, inputs):
+    def prepare_inputs_kwargs(self, inputs, r=None, train=None):
         time_series = inputs['time_series']
         node_feature = inputs['correlation']
         labels = inputs['labels']
+
+        mu = []
+        logvar = []
+        if r is not None:
+            class_means = r[0]
+            class_logvars = r[1]
+            
+            for label in labels:
+                mu.append(torch.tensor(class_means[int(np.argmax(label))]).unsqueeze(0))
+                logvar.append(torch.tensor(class_logvars[int(np.argmax(label))]).unsqueeze(0))
+            mu = torch.cat(mu, dim=0)
+            logvar = torch.cat(logvar, dim=0)
+
+        
         return {"time_series": time_series.to(self.device),
                 "node_feature": node_feature.to(self.device),
-                "labels": labels.float().to(self.device)}
+                "labels": labels.float().to(self.device),
+                "r_mu": mu.to(self.device) if len(mu) > 0 else None,
+                "r_logvar": logvar.to(self.device) if len(logvar) > 0 else None,
+                "train": True if train else False}
 
-    def train_epoch(self):
+    def train_epoch(self, epoch, r=None):
         train_dataloader = self.data_loaders['train']
         self.model.train()
         losses = 0
         loss_list = []
-
+        zs = []
+        ys = []
         for step, inputs in enumerate(tqdm(train_dataloader, desc="Iteration", ncols=0)):
-            input_kwargs = self.prepare_inputs_kwargs(inputs)
-            outputs = self.model(**input_kwargs)
+            input_kwargs = self.prepare_inputs_kwargs(inputs, r, True)
+            outputs, z = self.model(**input_kwargs)
+            y = input_kwargs['labels']
+            zs.append(z.detach().cpu().numpy())
+            ys.append(np.argmax(y.detach().cpu().numpy(), axis=1))
             loss = outputs.loss
             self.optimizer.zero_grad()
             loss.backward()
@@ -732,9 +762,11 @@ class STWeightTrainer(Trainer):
             loss_list.append(loss.item())
             # wandb.log({'Training loss': loss.item(),
                        # 'Learning rate': self.optimizer.param_groups[0]['lr']})
+        zs = np.concatenate(zs, axis=0)
+        ys = np.concatenate(ys, axis=0)
 
-        return losses / len(loss_list)
-
+        return losses / len(loss_list), zs, ys
+        
     def train(self):
         total = self.args.num_epochs * len(self.data_loaders['train'])
         logger.info("***** Running training *****")
@@ -749,82 +781,70 @@ class STWeightTrainer(Trainer):
         # wandb.watch(self.model)
         if self.args.visualize:
             self.visualize()
+
+        zs = None
+        ys = None
         for epoch in tqdm(range(1, self.args.num_epochs + 1), desc="epoch"):
             start_time = timer()
-            train_loss = self.train_epoch()
+            if zs is not None:
+                r = self.compute_class_mean_logvar(zs, ys)
+                train_loss, zs, ys = self.train_epoch(epoch, r)
+            else:
+                train_loss, zs, ys = self.train_epoch(epoch)
             end_time = timer()
 
             self.data_config.alpha = self.data_config.beta = \
                 0.8 * (self.args.num_epochs - epoch) / self.args.num_epochs + 0.2
             self.test_result = self.evaluate()
-            self.best_result = self.test_result
+            # if self.best_result is None or self.best_result['AUC'] <= self.test_result['AUC']:
+            #     self.best_result = self.test_result
+            #     self.save_model()
+            
+            # self.best_result = self.test_result
             msg = f"Epoch: {epoch}, Train loss: {train_loss:.5f}, Test loss: {self.test_result['Loss']:.5f}," \
                   f"Epoch time = {(end_time - start_time):.3f}s"
             print(msg)
             logger.info(msg)
-            
-            
-class EESTWTrainer(Trainer):
-    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
-        super(EESTWTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+
+    
+    def compute_class_mean_logvar(self, zs, ys):
+        """
+        计算每个类别的z的均值和方差
         
-    def prepare_inputs_kwargs(self, inputs):
-        time_series = inputs['time_series']
-        node_feature = inputs['correlation']
-        labels = inputs['labels']
-        return {"time_series": time_series.to(self.device),
-                "node_feature": node_feature.to(self.device),
-                "labels": labels.float().to(self.device)}
+        参数:
+        zs: shape (N, L, C, D)
+        ys: shape (N,) 类别标签
+        
+        返回:
+        class_means: 字典，键为类别，值为该类别z的均值数组 (L, C, D)
+        class_vars: 字典，键为类别，值为该类别z的方差数组 (L, C, D)
+        """
+        # 获取所有唯一的类别标签
+        unique_classes = np.unique(ys)
+        
+        # 初始化字典存储结果
+        class_means = {}
+        class_logvars = {}
+        
+        for cls in unique_classes:
+            # 获取该类别对应的所有z
+            mask = (ys == cls)
+            class_z = zs[mask]  # shape (n_cls, L, C, D)，其中n_cls是该类别的样本数
+            
+            if len(class_z) == 0:
+                continue
+                
+            # 计算均值
+            mean_val = np.mean(class_z, axis=0)  # shape (L, C, D)
+            
+            # 计算方差，使用无偏估计（ddof=1）
+            var_val = np.var(class_z, axis=0, ddof=1)  # shape (L, C, D)
 
-    def train_epoch(self):
-        train_dataloader = self.data_loaders['train']
-        self.model.train()
-        losses = 0
-        loss_list = []
+            epsilon = 1e-8
+            logvar = np.log(var_val + epsilon)
+            
+            class_means[cls] = mean_val
+            class_logvars[cls] = logvar
+        
+        return class_means, class_logvars
 
-        for step, inputs in enumerate(tqdm(train_dataloader, desc="Iteration", ncols=0)):
-            input_kwargs = self.prepare_inputs_kwargs(inputs)
-            outputs = self.model(**input_kwargs)
-            loss = outputs.loss
-            self.optimizer.zero_grad()
-            loss.backward()
-            if self.model_config.clip_grad > 0.0:
-                torch.nn.utils.clip_grad_value_(self.model.parameters(), self.model_config.clip_grad)
-
-            self.optimizer.step()
-            self.scheduler.step()  # Update learning rate schedule
-
-            losses += loss.item()
-            loss_list.append(loss.item())
-            # wandb.log({'Training loss': loss.item(),
-                       # 'Learning rate': self.optimizer.param_groups[0]['lr']})
-
-        return losses / len(loss_list)
-
-    def train(self):
-        total = self.args.num_epochs * len(self.data_loaders['train'])
-        logger.info("***** Running training *****")
-        logger.info("  Num examples = %d", len(self.data_loaders['train']))
-        logger.info("  Num Epochs = %d", self.args.num_epochs)
-        logger.info("  Total train batch size = %d", self.args.batch_size)
-        logger.info("  warmup steps = %d", self.args.warmup_steps)
-        logger.info("  Total optimization steps = %d", total)
-        logger.info("  Save steps = %d", self.args.save_steps)
-
-        self.init_components()
-        # wandb.watch(self.model)
-        if self.args.visualize:
-            self.visualize()
-        for epoch in tqdm(range(1, self.args.num_epochs + 1), desc="epoch"):
-            start_time = timer()
-            train_loss = self.train_epoch()
-            end_time = timer()
-
-            self.data_config.alpha = self.data_config.beta = \
-                0.8 * (self.args.num_epochs - epoch) / self.args.num_epochs + 0.2
-            self.test_result = self.evaluate()
-            self.best_result = self.test_result
-            msg = f"Epoch: {epoch}, Train loss: {train_loss:.5f}, Test loss: {self.test_result['Loss']:.5f}," \
-                  f"Epoch time = {(end_time - start_time):.3f}s"
-            print(msg)
-            logger.info(msg)

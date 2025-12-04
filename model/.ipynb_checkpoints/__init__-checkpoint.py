@@ -20,3 +20,4 @@ from .BrainVAE import *
 from .STWeight import *
 from .EESTW import *
 from .SingleEncoderBVAE import *
+from .CVIB import *

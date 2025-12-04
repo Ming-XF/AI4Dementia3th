@@ -15,17 +15,17 @@ args = parser.parse_args()
 LOG_DIR = args.path       # 日志文件所在目录
 OUT_DIR = "./analysis"
 
-if args.type == 2:
+if args.type == 200:
     OUTPUT_IMG = 'multi_model_metrics_dementia.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia.html'
     DATASET = "Dementia"
     metrix = "auc"
-elif args.type == 4:
+elif args.type == 400:
     OUTPUT_IMG = 'multi_model_metrics_dementia400.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia400.html'
     DATASET = "Dementia400"
     metrix = "f_score"
-elif args.type == 20:
+elif args.type == 2000:
     OUTPUT_IMG = 'multi_model_metrics_dementia2000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia2000.html'
     DATASET = "Dementia2000"
