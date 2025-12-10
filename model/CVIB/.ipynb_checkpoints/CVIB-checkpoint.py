@@ -80,11 +80,13 @@ class CVIB(nn.Module):
         self.loss_fn = torch.nn.CrossEntropyLoss()
         
         self.dense3 = torch.nn.Linear(32, config.num_classes)
+
+        # self.lossWeight = UncertaintyWeighting(3)
         
         self.last_logit_loss = torch.tensor(1, device='cuda')
         self.last_vae_loss = torch.tensor(1000000, device='cuda')
 
-    def forward(self, time_series, node_feature, labels, r_mu, r_logvar, train):
+    def forward(self, time_series, node_feature, labels, r1_mu, r1_logvar, r2_mu, r2_logvar, r3_mu, r3_logvar, train):
         
         #消融脑区2，65，36，55，24
         # pdb.set_trace()
@@ -95,17 +97,17 @@ class CVIB(nn.Module):
         # pdb.set_trace()
 
         if self.config.abla_vae in self.vae_configs:
-            mu1, rl1, kl1 = self.vae1(time_series, r_mu, r_logvar)
-            mu2, rl2, kl2 = self.vae2(time_series, r_mu, r_logvar)
+            mu1, rl1, kl1 = self.vae1(time_series, r1_mu, r1_logvar)
+            mu2, rl2, kl2 = self.vae2(time_series, r2_mu, r2_logvar)
             a1 = self.batch_channel_pearson(mu1)
             a2 = self.batch_channel_pearson(mu2)
             adj = (a1 + a2) / 2
             adj = torch.mean(adj, dim=1).unsqueeze(1)
             
         else:
-            mu1, rl1, kl1 = self.vae1(time_series, r_mu, r_logvar)
-            mu2, rl2, kl2 = self.vae2(time_series, r_mu, r_logvar)
-            mu3, rl3, kl3 = self.vae3(time_series, r_mu, r_logvar)
+            mu1, rl1, kl1 = self.vae1(time_series, r1_mu, r1_logvar)
+            mu2, rl2, kl2 = self.vae2(time_series, r2_mu, r2_logvar)
+            mu3, rl3, kl3 = self.vae3(time_series, r3_mu, r3_logvar)
             a1 = self.batch_channel_pearson(mu1)
             a2 = self.batch_channel_pearson(mu2)
             a3 = self.batch_channel_pearson(mu3)
@@ -119,23 +121,27 @@ class CVIB(nn.Module):
         logit_loss = self.loss_fn(logits, labels)
 
         if self.config.abla_vae in self.vae_configs:
+            # kl = (kl1 + kl2) / 2
+            # rl = (rl1 + rl2) / 2
             vae_loss = rl1 + rl2 + kl1 + kl2
         else:
+            # kl = (kl1 + kl2 + kl3) / 3
+            # rl = (rl1 + rl2 + rl3) / 3
             vae_loss = rl1 + rl2 + rl3 + kl1 + kl2 + kl3
         
         loss = logit_loss + (self.last_logit_loss.detach() / self.last_vae_loss.detach()) * vae_loss
+
+        # losses = [logit_loss, kl, rl]
+        # loss = self.lossWeight(losses)
         
         self.last_logit_loss = logit_loss
         self.last_vae_loss = vae_loss
 
-        z = None
-        if self.config.abla_vae in self.vae_configs:
-            z = (mu1 + mu2) / 2
-        else:
-            z = (mu1 + mu2 + mu3) / 3
-
         if train:
-            return ModelOutputs(logits=logits, loss=loss), z
+            if self.config.abla_vae in self.vae_configs:
+                return ModelOutputs(logits=logits, loss=loss), mu1, mu2, None
+            else:
+                return ModelOutputs(logits=logits, loss=loss), mu1, mu2, mu3
         else:
             return ModelOutputs(logits=logits, loss=loss)
         

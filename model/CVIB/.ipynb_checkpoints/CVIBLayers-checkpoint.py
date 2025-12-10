@@ -6,6 +6,22 @@ from einops import rearrange, repeat
 
 import pdb
 
+class UncertaintyWeighting(nn.Module):
+    """
+    使用不确定性自动学习权重（Kendall et al., 2018）
+    每个损失有自己的可学习log方差参数
+    """
+    def __init__(self, num_losses):
+        super().__init__()
+        self.log_vars = nn.Parameter(torch.zeros(num_losses))
+        
+    def forward(self, losses):
+        total_loss = 0
+        for i, loss in enumerate(losses):
+            precision = torch.exp(-self.log_vars[i])
+            total_loss += precision * loss + 0.5 * self.log_vars[i]
+        return total_loss
+
 def gaussian_kl_divergence(mu1, logvar1, mu2=None, logvar2=None):
     """
     计算两个高斯分布之间的KL散度

@@ -711,6 +711,220 @@ class CVIBTrainer(Trainer):
     def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
         super(CVIBTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
         
+    def prepare_inputs_kwargs(self, inputs, r1=None, r2=None, r3=None, train=None):
+        time_series = inputs['time_series']
+        node_feature = inputs['correlation']
+        labels = inputs['labels']
+
+        mu1 = []
+        logvar1 = []
+        mu2 = []
+        logvar2 = []
+        mu3 = []
+        logvar3 = []
+        if r1 is not None:
+            class1_means = r1[0]
+            class1_logvars = r1[1]
+
+            class2_means = r2[0]
+            class2_logvars = r2[1]
+
+            class3_means = None
+            class3_logvars = None
+            if r3 is not None:
+                class3_means = r3[0]
+                class3_logvars = r3[1]
+            
+            for label in labels:
+                mu1.append(torch.tensor(class1_means[int(np.argmax(label))]).unsqueeze(0))
+                logvar1.append(torch.tensor(class1_logvars[int(np.argmax(label))]).unsqueeze(0))
+
+                mu2.append(torch.tensor(class2_means[int(np.argmax(label))]).unsqueeze(0))
+                logvar2.append(torch.tensor(class2_logvars[int(np.argmax(label))]).unsqueeze(0))
+
+                if r3 is not None:
+                    mu3.append(torch.tensor(class3_means[int(np.argmax(label))]).unsqueeze(0))
+                    logvar3.append(torch.tensor(class3_logvars[int(np.argmax(label))]).unsqueeze(0))
+
+                
+            mu1 = torch.cat(mu1, dim=0)
+            logvar1 = torch.cat(logvar1, dim=0)
+            mu2 = torch.cat(mu2, dim=0)
+            logvar2 = torch.cat(logvar2, dim=0)
+            if r3 is not None:
+                mu3 = torch.cat(mu3, dim=0)
+                logvar3 = torch.cat(logvar3, dim=0)
+            else:
+                mu3 = None
+                logvar3 = None
+
+        
+        return {"time_series": time_series.to(self.device),
+                "node_feature": node_feature.to(self.device),
+                "labels": labels.float().to(self.device),
+                "r1_mu": mu1.to(self.device) if len(mu1) > 0 else None,
+                "r1_logvar": logvar1.to(self.device) if len(logvar1) > 0 else None,
+                "r2_mu": mu2.to(self.device) if len(mu2) > 0 else None,
+                "r2_logvar": logvar2.to(self.device) if len(logvar2) > 0 else None,
+                "r3_mu": mu3.to(self.device) if mu3 is not None and len(mu3) > 0 else None,
+                "r3_logvar": logvar3.to(self.device) if logvar3 is not None and len(logvar3) > 0 else None,
+                "train": True if train else False}
+
+    def train_epoch(self, epoch, r1=None, r2=None, r3=None):
+        train_dataloader = self.data_loaders['train']
+        self.model.train()
+        losses = 0
+        loss_list = []
+        z1s = []
+        z2s = []
+        z3s = []
+        ys = []
+        for step, inputs in enumerate(tqdm(train_dataloader, desc="Iteration", ncols=0)):
+            input_kwargs = self.prepare_inputs_kwargs(inputs, r1, r2, r3, True)
+            outputs, z1, z2, z3 = self.model(**input_kwargs)
+            y = input_kwargs['labels']
+            z1s.append(z1.detach().cpu().numpy())
+            z2s.append(z2.detach().cpu().numpy())
+            if z3 is not None:
+                z3s.append(z3.detach().cpu().numpy())
+            ys.append(np.argmax(y.detach().cpu().numpy(), axis=1))
+            loss = outputs.loss
+            self.optimizer.zero_grad()
+            loss.backward()
+            # if self.check_gradient_explosion(self.model, threshold=1e6):
+            #     print("检测到梯度爆炸，中断训练")
+            #     break
+            if self.model_config.clip_grad > 0.0:
+                torch.nn.utils.clip_grad_value_(self.model.parameters(), self.model_config.clip_grad)
+
+            self.optimizer.step()
+            self.scheduler.step()  # Update learning rate schedule
+
+            losses += loss.item()
+            loss_list.append(loss.item())
+            # wandb.log({'Training loss': loss.item(),
+                       # 'Learning rate': self.optimizer.param_groups[0]['lr']})
+        z1s = np.concatenate(z1s, axis=0)
+        z2s = np.concatenate(z2s, axis=0)
+        if len(z3s) > 0:
+            z3s = np.concatenate(z3s, axis=0)
+        else:
+            z3s = None
+        ys = np.concatenate(ys, axis=0)
+
+        return losses / len(loss_list), z1s, z2s, z3s, ys
+        
+    def train(self):
+        total = self.args.num_epochs * len(self.data_loaders['train'])
+        logger.info("***** Running training *****")
+        logger.info("  Num examples = %d", len(self.data_loaders['train']))
+        logger.info("  Num Epochs = %d", self.args.num_epochs)
+        logger.info("  Total train batch size = %d", self.args.batch_size)
+        logger.info("  warmup steps = %d", self.args.warmup_steps)
+        logger.info("  Total optimization steps = %d", total)
+        logger.info("  Save steps = %d", self.args.save_steps)
+
+        self.init_components()
+        # wandb.watch(self.model)
+        if self.args.visualize:
+            self.visualize()
+
+        z1s = None
+        z2s = None
+        z3s = None
+        ys = None
+        r1 = None
+        r2 = None
+        r3 = None
+        for epoch in tqdm(range(1, self.args.num_epochs + 1), desc="epoch"):
+            start_time = timer()
+            if z1s is not None:
+                # if epoch % 5 == 0 or epoch == 2:
+                #     r = self.compute_class_mean_logvar(zs, ys)
+                r1 = self.compute_class_mean_logvar(z1s, ys)
+                r2 = self.compute_class_mean_logvar(z2s, ys)
+                if z3s is not None:
+                    r3 = self.compute_class_mean_logvar(z3s, ys)
+                else:
+                    r3 = None
+                train_loss, z1s, z2s, z3s, ys = self.train_epoch(epoch, r1, r2, r3)
+            else:
+                train_loss, z1s, z2s, z3s, ys = self.train_epoch(epoch)
+            end_time = timer()
+
+            self.data_config.alpha = self.data_config.beta = \
+                0.8 * (self.args.num_epochs - epoch) / self.args.num_epochs + 0.2
+            self.test_result = self.evaluate()
+            # if self.best_result is None or self.best_result['AUC'] <= self.test_result['AUC']:
+            #     self.best_result = self.test_result
+            #     self.save_model()
+            
+            # self.best_result = self.test_result
+            msg = f"Epoch: {epoch}, Train loss: {train_loss:.5f}, Test loss: {self.test_result['Loss']:.5f}," \
+                  f"Epoch time = {(end_time - start_time):.3f}s"
+            print(msg)
+            logger.info(msg)
+
+    
+    def compute_class_mean_logvar(self, zs, ys):
+        """
+        计算每个类别的z的均值和方差
+        
+        参数:
+        zs: shape (N, L, C, D)
+        ys: shape (N,) 类别标签
+        
+        返回:
+        class_means: 字典，键为类别，值为该类别z的均值数组 (L, C, D)
+        class_vars: 字典，键为类别，值为该类别z的方差数组 (L, C, D)
+        """
+        # 获取所有唯一的类别标签
+        unique_classes = np.unique(ys)
+        
+        # 初始化字典存储结果
+        class_means = {}
+        class_logvars = {}
+        
+        for cls in unique_classes:
+            # 获取该类别对应的所有z
+            mask = (ys == cls)
+            class_z = zs[mask]  # shape (n_cls, L, C, D)，其中n_cls是该类别的样本数
+            
+            if len(class_z) == 0:
+                continue
+                
+            # 计算均值
+            mean_val = np.mean(class_z, axis=0)  # shape (L, C, D)
+            
+            # 计算方差，使用无偏估计（ddof=1）
+            var_val = np.var(class_z, axis=0, ddof=1)  # shape (L, C, D)
+
+            epsilon = 1e-8
+            logvar = np.log(var_val + epsilon)
+            
+            class_means[cls] = mean_val
+            class_logvars[cls] = logvar
+        
+        return class_means, class_logvars
+
+    def check_gradient_explosion(self, model, threshold=1e6):
+        """检查梯度是否爆炸"""
+        total_norm = 0
+        for p in model.parameters():
+            if p.grad is not None:
+                param_norm = p.grad.data.norm(2)
+                total_norm += param_norm.item() ** 2
+        total_norm = total_norm ** 0.5
+        
+        if total_norm > threshold:
+            print(f"⚠️ 梯度爆炸! 总梯度范数: {total_norm:.2e} > {threshold:.0e}")
+            return True
+        return False
+
+class SrCVIBTrainer(Trainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(SrCVIBTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+        
     def prepare_inputs_kwargs(self, inputs, r=None, train=None):
         time_series = inputs['time_series']
         node_feature = inputs['correlation']
@@ -721,10 +935,12 @@ class CVIBTrainer(Trainer):
         if r is not None:
             class_means = r[0]
             class_logvars = r[1]
-            
+
             for label in labels:
                 mu.append(torch.tensor(class_means[int(np.argmax(label))]).unsqueeze(0))
                 logvar.append(torch.tensor(class_logvars[int(np.argmax(label))]).unsqueeze(0))
+
+                
             mu = torch.cat(mu, dim=0)
             logvar = torch.cat(logvar, dim=0)
 
@@ -752,6 +968,9 @@ class CVIBTrainer(Trainer):
             loss = outputs.loss
             self.optimizer.zero_grad()
             loss.backward()
+            # if self.check_gradient_explosion(self.model, threshold=1e6):
+            #     print("检测到梯度爆炸，中断训练")
+            #     break
             if self.model_config.clip_grad > 0.0:
                 torch.nn.utils.clip_grad_value_(self.model.parameters(), self.model_config.clip_grad)
 
@@ -784,9 +1003,12 @@ class CVIBTrainer(Trainer):
 
         zs = None
         ys = None
+        r = None
         for epoch in tqdm(range(1, self.args.num_epochs + 1), desc="epoch"):
             start_time = timer()
             if zs is not None:
+                # if epoch % 5 == 0 or epoch == 2:
+                #     r = self.compute_class_mean_logvar(zs, ys)
                 r = self.compute_class_mean_logvar(zs, ys)
                 train_loss, zs, ys = self.train_epoch(epoch, r)
             else:
@@ -848,3 +1070,16 @@ class CVIBTrainer(Trainer):
         
         return class_means, class_logvars
 
+    # def check_gradient_explosion(self, model, threshold=1e6):
+    #     """检查梯度是否爆炸"""
+    #     total_norm = 0
+    #     for p in model.parameters():
+    #         if p.grad is not None:
+    #             param_norm = p.grad.data.norm(2)
+    #             total_norm += param_norm.item() ** 2
+    #     total_norm = total_norm ** 0.5
+        
+    #     if total_norm > threshold:
+    #         print(f"⚠️ 梯度爆炸! 总梯度范数: {total_norm:.2e} > {threshold:.0e}")
+    #         return True
+    #     return False

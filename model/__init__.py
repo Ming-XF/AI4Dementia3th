@@ -21,3 +21,4 @@ from .STWeight import *
 from .EESTW import *
 from .SingleEncoderBVAE import *
 from .CVIB import *
+from .SrCVIB import *

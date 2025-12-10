@@ -330,6 +330,21 @@ def init_model_config(args, data_config: DataConfig):
                                     integration=args.integration,
                                    cor_comput=args.cor_comput)
         model = CVIB(model_config)
+    elif args.model == 'SrCVIB':
+        model_config = SrCVIBConfig(node_size=data_config.node_size,
+                                    num_classes=data_config.num_class,
+                                    num_heads=data_config.num_heads,
+                                    abla_channel=data_config.abla_channel,
+                                    abla_vae=data_config.abla_vae,
+                                    d_model=args.d_model,
+                                    num_layers=args.num_layers,
+                                    window_size=args.window_size,
+                                    window_stride=args.window_stride,
+                                    dynamic_length=args.dynamic_length,
+                                    sampling_init=args.sampling_init,
+                                    integration=args.integration,
+                                   cor_comput=args.cor_comput)
+        model = SrCVIB(model_config)
     else:
         model = None
         model_config = None
