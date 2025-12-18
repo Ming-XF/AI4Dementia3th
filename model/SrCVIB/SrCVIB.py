@@ -121,14 +121,12 @@ class SrCVIB(nn.Module):
         logit_loss = self.loss_fn(logits, labels)
 
         if self.config.abla_vae in self.vae_configs:
-            # kl = (kl1 + kl2) / 2
-            # rl = (rl1 + rl2) / 2
-            # vae_loss = kl + rl
             vae_loss = rl1 + rl2 + kl1 + kl2
+        elif self.config.abla_vae == "r":
+            vae_loss = kl1 + kl2 + kl3
+        elif self.config.abla_vae != "k":
+            vae_loss = rl1 + rl2 + rl3
         else:
-            # kl = (kl1 + kl2 + kl3) / 3
-            # rl = (rl1 + rl2 + rl3) / 3
-            # vae_loss = rl + kl
             vae_loss = rl1 + rl2 + rl3 + kl1 + kl2 + kl3
         
         loss = logit_loss + (self.last_logit_loss.detach() / self.last_vae_loss.detach()) * vae_loss
@@ -213,5 +211,4 @@ class SrCVIB(nn.Module):
         return corr_matrix
     
     
-
 

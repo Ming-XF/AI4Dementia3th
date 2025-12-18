@@ -51,7 +51,8 @@ def parse_log(path):
             'recall': recalls[i],
             'f_score': fscores[i],
             'test_loss': test_losses[i],
-            'train_loss': train_losses[i]
+            'train_loss': train_losses[i],
+            'epoch': i
         } for i in range(len(aucs))]
         
         # 找到当前训练中具有最大相关指标的epoch
@@ -87,6 +88,7 @@ if not best_epochs_per_run:
     exit()
 for i, metrics in enumerate(best_epochs_per_run, 1):
     print(f"第 {i} 次训练评估指标:")
+    print(f"  Epoch:        {metrics['epoch']}")
     print(f"  AUC:        {metrics['auc']:.4f}")
     print(f"  准确率:     {metrics['accuracy']:.4f}")
     print(f"  精确率:     {metrics['precision']:.4f}")
