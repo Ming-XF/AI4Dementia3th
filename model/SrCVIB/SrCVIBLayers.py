@@ -48,7 +48,7 @@ def gaussian_kl_divergence(mu1, logvar1, mu2=None, logvar2=None):
         assert logvar2.shape == logvar1.shape, "logvar2必须与logvar1形状一致"
     
     # 计算方差（从logvar转换）
-    var1 = torch.exp(logvar1)
+    var1 = torch.exp(logvar1.clamp(max=20))
     
     if mu2 is None:
         # 与标准正态分布N(0,1)的KL散度
@@ -56,7 +56,7 @@ def gaussian_kl_divergence(mu1, logvar1, mu2=None, logvar2=None):
         kl = -0.5 * (1 + logvar1 - mu1.pow(2) - var1)
     else:
         # 计算第二个分布的方差
-        var2 = torch.exp(logvar2)
+        var2 = torch.exp(logvar2.clamp(max=20))
         
         # 两个高斯分布之间的KL散度公式:
         # KL(q||p) = 0.5 * (log(σ2^2/σ1^2) + (σ1^2 + (μ1-μ2)^2)/σ2^2 - 1)
@@ -121,7 +121,7 @@ class VAE(nn.Module):
     
     def reparameterize(self, mu, logvar):
         """重参数化技巧"""
-        std = torch.exp(0.5 * logvar)
+        std = torch.exp(0.5 * logvar.clamp(max=20))
         eps = torch.randn_like(std)
         return mu + eps * std
     

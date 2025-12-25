@@ -124,7 +124,7 @@ class SrCVIB(nn.Module):
             vae_loss = rl1 + rl2 + kl1 + kl2
         elif self.config.abla_vae == "r":
             vae_loss = kl1 + kl2 + kl3
-        elif self.config.abla_vae != "k":
+        elif self.config.abla_vae == "k":
             vae_loss = rl1 + rl2 + rl3
         else:
             vae_loss = rl1 + rl2 + rl3 + kl1 + kl2 + kl3
