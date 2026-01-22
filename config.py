@@ -380,6 +380,7 @@ def init_config():
     data_group = parser.add_argument_group(title="data", description="")
     data_group.add_argument("--dataset", default='BR', type=str, help="")
     data_group.add_argument("--data_dir", default="", type=str, help="")
+    data_group.add_argument("--data2_dir", default="", type=str, help="")
     data_group.add_argument("--data_processors", default=0, type=int, help="")
     data_group.add_argument("--train_set", default=0.7, type=float, help="")
     data_group.add_argument("--val_set", default=0.1, type=float, help="")

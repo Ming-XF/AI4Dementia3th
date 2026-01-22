@@ -3,6 +3,7 @@ class DataConfig:
     def __init__(self, args, time_series_size=0, node_size=0, node_feature_size=0, num_class=2):
         self.dataset = args.dataset
         self.data_dir = args.data_dir
+        self.data2_dir = args.data2_dir
         self.train_set = args.train_set
         self.percentage = args.percentage
         self.val_set = args.val_set

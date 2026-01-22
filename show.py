@@ -30,10 +30,20 @@ elif args.type == 2000:
     OUTPUT_HTML = 'model_metrics_comparison_dementia2000.html'
     DATASET = "Dementia2000"
     metrix = "auc"
-else:
+elif args.type == 4000:
     OUTPUT_IMG = 'multi_model_metrics_dementia4000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia4000.html'
     DATASET = "Dementia4000"
+    metrix = "f_score"
+elif args.type == 20000:
+    OUTPUT_IMG = 'multi_model_metrics_dementia20000.png'
+    OUTPUT_HTML = 'model_metrics_comparison_dementia20000.html'
+    DATASET = "Dementia20000"
+    metrix = "f_score"
+else:
+    OUTPUT_IMG = 'multi_model_metrics_dementia40000.png'
+    OUTPUT_HTML = 'model_metrics_comparison_dementia40000.html'
+    DATASET = "Dementia40000"
     metrix = "f_score"
 
 def generate_html_table(model_data):

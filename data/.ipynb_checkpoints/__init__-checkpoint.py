@@ -6,6 +6,7 @@ from .dementia import DementiaDataset
 from .dementia400 import Dementia400Dataset
 from .dementia2000 import Dementia2000Dataset
 from .dementia4000 import Dementia4000Dataset
+from .dementia20000 import Dementia20000Dataset
 from .c42b import C42BDataset
 from .zuco import ZuCoDataset
 from .preprocess import continues_mixup_data
