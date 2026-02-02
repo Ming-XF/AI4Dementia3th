@@ -39,7 +39,7 @@ elif args.type == 20000:
     OUTPUT_IMG = 'multi_model_metrics_dementia20000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia20000.html'
     DATASET = "Dementia20000"
-    metrix = "f_score"
+    metrix = "auc"
 else:
     OUTPUT_IMG = 'multi_model_metrics_dementia40000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia40000.html'
