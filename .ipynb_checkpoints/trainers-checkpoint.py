@@ -1070,16 +1070,40 @@ class SrCVIBTrainer(Trainer):
         
         return class_means, class_logvars
 
-    # def check_gradient_explosion(self, model, threshold=1e6):
-    #     """检查梯度是否爆炸"""
-    #     total_norm = 0
-    #     for p in model.parameters():
-    #         if p.grad is not None:
-    #             param_norm = p.grad.data.norm(2)
-    #             total_norm += param_norm.item() ** 2
-    #     total_norm = total_norm ** 0.5
+
+
+class AlzNetV3Trainer(Trainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(AlzNetV3Trainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+
+    def prepare_inputs_kwargs(self, inputs, **kwargs):
+        time_series = inputs['time_series']
+        labels = inputs['labels']
+
+        # pdb.set_trace()
+        # node_feature = extract_eeg_connectivity_features(time_series, sfreq=250)
+        node_feature = extract_simple_eeg_features(time_series, sfreq=250, epoch_length=1)
         
-    #     if total_norm > threshold:
-    #         print(f"⚠️ 梯度爆炸! 总梯度范数: {total_norm:.2e} > {threshold:.0e}")
-    #         return True
-    #     return False
+        return {"node_feature": node_feature.to(self.device),
+                "labels": labels.float().to(self.device)}
+
+    def train_epoch(self):
+        train_dataloader = self.data_loaders['train']
+        self.model.train()
+        losses = 0
+        loss_list = []
+
+        for step, inputs in enumerate(tqdm(train_dataloader, desc="Iteration", ncols=0)):
+            input_kwargs = self.prepare_inputs_kwargs(inputs, step=step)
+            outputs = self.model(**input_kwargs)
+            loss = outputs.loss
+            self.optimizer.zero_grad()
+            loss.backward()
+
+            self.optimizer.step()
+            self.scheduler.step()  # Update learning rate schedule
+
+            losses += loss.item()
+            loss_list.append(loss.item())
+
+        return losses / len(loss_list)

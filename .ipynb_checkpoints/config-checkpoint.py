@@ -345,6 +345,10 @@ def init_model_config(args, data_config: DataConfig):
                                     integration=args.integration,
                                    cor_comput=args.cor_comput)
         model = SrCVIB(model_config)
+    elif args.model == 'AlzNetV3':
+        model_config = AlzNetV3Config(node_size=data_config.node_size,
+                                         num_classes=data_config.num_class)
+        model = AlzNetV3(model_config)
     else:
         model = None
         model_config = None
