@@ -23,3 +23,4 @@ from .SingleEncoderBVAE import *
 from .CVIB import *
 from .SrCVIB import *
 from .AlzNetV3 import *
+from .GCDGCN import *

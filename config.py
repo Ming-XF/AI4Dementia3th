@@ -349,6 +349,10 @@ def init_model_config(args, data_config: DataConfig):
         model_config = AlzNetV3Config(node_size=data_config.node_size,
                                          num_classes=data_config.num_class)
         model = AlzNetV3(model_config)
+    elif args.model == 'GCDGCN':
+        model_config = GCDGCNConfig(node_size=data_config.node_size,
+                                         num_classes=data_config.num_class)
+        model = GCDGCN(model_config)
     else:
         model = None
         model_config = None

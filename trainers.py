@@ -1107,3 +1107,65 @@ class AlzNetV3Trainer(Trainer):
             loss_list.append(loss.item())
 
         return losses / len(loss_list)
+
+class GCDGCNTrainer(Trainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(GCDGCNTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+
+    def prepare_inputs_kwargs(self, inputs, epoch=None):
+        time_series = inputs['time_series']
+        node_feature = inputs['correlation']
+        labels = inputs['labels']
+        stage = "pretrain"
+        if epoch is None or epoch > 100:
+            stage = "finetune"
+        
+        return {"node_feature": node_feature.to(self.device),
+                "labels": labels.float().to(self.device),
+                "stage": stage}
+    
+    def train_epoch(self, epoch):
+        train_dataloader = self.data_loaders['train']
+        self.model.train()
+        losses = 0
+        loss_list = []
+        for step, inputs in enumerate(tqdm(train_dataloader, desc="Iteration", ncols=0)):
+            input_kwargs = self.prepare_inputs_kwargs(inputs, epoch)
+            outputs = self.model(**input_kwargs)
+            loss = outputs.loss
+            self.optimizer.zero_grad()
+            loss.backward()
+
+            self.optimizer.step()
+            self.scheduler.step()  # Update learning rate schedule
+
+            losses += loss.item()
+            loss_list.append(loss.item())
+
+        return losses / len(loss_list)
+
+    def train(self):
+        total = self.args.num_epochs * len(self.data_loaders['train'])
+        logger.info("***** Running training *****")
+        logger.info("  Num examples = %d", len(self.data_loaders['train']))
+        logger.info("  Num Epochs = %d", self.args.num_epochs)
+        logger.info("  Total train batch size = %d", self.args.batch_size)
+        logger.info("  warmup steps = %d", self.args.warmup_steps)
+        logger.info("  Total optimization steps = %d", total)
+        logger.info("  Save steps = %d", self.args.save_steps)
+
+        self.init_components()
+        if self.args.visualize:
+            self.visualize()
+        for epoch in tqdm(range(1, self.args.num_epochs + 1), desc="epoch"):
+            start_time = timer()
+            train_loss = self.train_epoch(epoch)
+            end_time = timer()
+
+            self.data_config.alpha = self.data_config.beta = \
+                0.8 * (self.args.num_epochs - epoch) / self.args.num_epochs + 0.2
+            self.test_result = self.evaluate()
+            msg = f"Epoch: {epoch}, Train loss: {train_loss:.5f}, Test loss: {self.test_result['Loss']:.5f}," \
+                  f"Epoch time = {(end_time - start_time):.3f}s"
+            print(msg)
+            logger.info(msg)
