@@ -1169,3 +1169,8 @@ class GCDGCNTrainer(Trainer):
                   f"Epoch time = {(end_time - start_time):.3f}s"
             print(msg)
             logger.info(msg)
+
+class CEEDNetTrainer(DFaSTTrainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(CEEDNetTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+

@@ -353,6 +353,13 @@ def init_model_config(args, data_config: DataConfig):
         model_config = GCDGCNConfig(node_size=data_config.node_size,
                                          num_classes=data_config.num_class)
         model = GCDGCN(model_config)
+    elif args.model == "CEEDNet":
+        model_config = CEEDNetConfig(node_size=data_config.node_size,
+                                     time_series_size=data_config.time_series_size,
+                                     node_feature_size=data_config.node_feature_size,
+                                     num_classes=data_config.num_class)
+        model_config.class_weight = data_config.class_weight
+        model = CEEDNet(model_config)
     else:
         model = None
         model_config = None

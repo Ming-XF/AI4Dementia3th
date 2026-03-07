@@ -24,3 +24,4 @@ from .CVIB import *
 from .SrCVIB import *
 from .AlzNetV3 import *
 from .GCDGCN import *
+from .CEEDNet import *
