@@ -2,49 +2,58 @@ import os
 import re
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
 import argparse
 
 import pdb
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--type", type=int, required=True, help="")
+parser.add_argument("--type", type=str, required=True, help="")
 parser.add_argument("--path", type=str, default="./log_dir", required=False, help="")
 args = parser.parse_args()
 
 LOG_DIR = args.path       # 日志文件所在目录
 OUT_DIR = "./analysis"
 
-if args.type == 200:
+if args.type == "dementia":
     OUTPUT_IMG = 'multi_model_metrics_dementia.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia.html'
     DATASET = "Dementia"
     metrix = "auc"
-elif args.type == 400:
+elif args.type == "dementia400":
     OUTPUT_IMG = 'multi_model_metrics_dementia400.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia400.html'
     DATASET = "Dementia400"
     metrix = "f_score"
-elif args.type == 2000:
+elif args.type == "dementia2000":
     OUTPUT_IMG = 'multi_model_metrics_dementia2000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia2000.html'
     DATASET = "Dementia2000"
     metrix = "auc"
-elif args.type == 4000:
+elif args.type == "dementia4000":
     OUTPUT_IMG = 'multi_model_metrics_dementia4000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia4000.html'
     DATASET = "Dementia4000"
     metrix = "f_score"
-elif args.type == 20000:
+elif args.type == "dementia20000":
     OUTPUT_IMG = 'multi_model_metrics_dementia20000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia20000.html'
     DATASET = "Dementia20000"
     metrix = "auc"
-else:
+elif args.type == "dementia40000":
     OUTPUT_IMG = 'multi_model_metrics_dementia40000.png'
     OUTPUT_HTML = 'model_metrics_comparison_dementia40000.html'
     DATASET = "Dementia40000"
     metrix = "f_score"
+elif args.type == "C42B":
+    OUTPUT_IMG = 'multi_model_metrics_C42B.png'
+    OUTPUT_HTML = 'model_metrics_comparison_C42B.html'
+    DATASET = "C42B"
+    metrix = "auc"
+else:
+    print("未找到数据集")
+    sys.exit(0)
 
 def generate_html_table(model_data):
     """生成对比不同方法的HTML表格（三线表格式）"""
@@ -301,31 +310,31 @@ with open(os.path.join(OUT_DIR, OUTPUT_HTML), 'w') as f:
     f.write(html_content)
 print(f"HTML表格已保存：{OUTPUT_HTML}")
     
-# ------------------ 绘图 ------------------
-fig, axes = plt.subplots(3, 3, figsize=(18, 12))
-fig.suptitle('Multi-Model Metrics Comparison (Best Metrix Repeat)', fontsize=16)
+# # ------------------ 绘图 ------------------
+# fig, axes = plt.subplots(3, 3, figsize=(18, 12))
+# fig.suptitle('Multi-Model Metrics Comparison (Best Metrix Repeat)', fontsize=16)
 
-# 绘制所有7个指标
-for i, (metric, label) in enumerate(zip(metrics, labels)):
-    row = i // 3
-    col = i % 3
-    ax = axes[row, col]
+# # 绘制所有7个指标
+# for i, (metric, label) in enumerate(zip(metrics, labels)):
+#     row = i // 3
+#     col = i % 3
+#     ax = axes[row, col]
     
-    for model_name, epochs in model_data2.items():
-        x = list(range(1, len(epochs) + 1))
-        y = [e[metric] for e in epochs]
-        ax.plot(x, y, label=model_name)
-    ax.set_title(label)
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel(label)
-    ax.grid(True)
-    ax.legend()
+#     for model_name, epochs in model_data2.items():
+#         x = list(range(1, len(epochs) + 1))
+#         y = [e[metric] for e in epochs]
+#         ax.plot(x, y, label=model_name)
+#     ax.set_title(label)
+#     ax.set_xlabel('Epoch')
+#     ax.set_ylabel(label)
+#     ax.grid(True)
+#     ax.legend()
 
-# 隐藏最后一个空子图（如果有8个指标但只有7个需要显示）
-axes[2, 2].set_visible(False)
-axes[2, 1].set_visible(False)
+# # 隐藏最后一个空子图（如果有8个指标但只有7个需要显示）
+# axes[2, 2].set_visible(False)
+# axes[2, 1].set_visible(False)
 
-plt.tight_layout(rect=[0, 0, 1, 0.96])
-plt.savefig(os.path.join(OUT_DIR, OUTPUT_IMG), dpi=300)
-print(f"图像已保存：{OUTPUT_IMG}")
-# plt.show()
+# plt.tight_layout(rect=[0, 0, 1, 0.96])
+# plt.savefig(os.path.join(OUT_DIR, OUTPUT_IMG), dpi=300)
+# print(f"图像已保存：{OUTPUT_IMG}")
+# # plt.show()
