@@ -1174,3 +1174,7 @@ class CEEDNetTrainer(DFaSTTrainer):
     def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
         super(CEEDNetTrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
 
+class CVIB4LMDATrainer(SrCVIBTrainer):
+    def __init__(self, args, local_rank=0, task_id=0, subject_id=0):
+        super(CVIB4LMDATrainer, self).__init__(args, local_rank=local_rank, task_id=task_id, subject_id=subject_id)
+
