@@ -13,16 +13,10 @@ from .TCANet import *
 from .TCACNet import *
 from .SBLEST import *
 from .SteadyNet import *
-from .MTSTA import *
-from .VAESTA import *
 from .ALTER import *
-from .BrainVAE import *
-from .STWeight import *
-from .EESTW import *
-from .SingleEncoderBVAE import *
-from .CVIB import *
 from .SrCVIB import *
 from .AlzNetV3 import *
 from .GCDGCN import *
 from .CEEDNet import *
 from .CVIB4LMDA import *
+from .VIB import *

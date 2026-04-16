@@ -222,29 +222,6 @@ def init_model_config(args, data_config: DataConfig):
                                   )
         model_config.class_weight = data_config.class_weight
         model = SteadyNet(model_config)
-    elif args.model == 'MTSTA':
-        model_config = MTSTAConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration)
-        model = MTSTA(model_config)
-    elif args.model == 'VAESTA':
-        model_config = VAESTAConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration,
-                                   cor_comput=args.cor_comput)
-        model = VAESTA(model_config)
     elif args.model == "ALTER":
         model_config = ALTERConfig(node_size=data_config.node_size,
                                  # sizes=(data_config.node_size, data_config.node_size // 2),
@@ -261,75 +238,6 @@ def init_model_config(args, data_config: DataConfig):
                                  dim_feedforward=1024,
                                  )
         model = ALTER(model_config)
-    elif args.model == 'BrainVAE':
-        model_config = BrainVAEConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    num_heads=data_config.num_heads,
-                                    abla_channel=data_config.abla_channel,
-                                    abla_vae=data_config.abla_vae,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration,
-                                   cor_comput=args.cor_comput)
-        model = BrainVAE(model_config)
-    elif args.model == 'STWeight':
-        model_config = STWeightConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration,
-                                   cor_comput=args.cor_comput)
-        model = STWeight(model_config)
-    elif args.model == 'EESTW':
-        model_config = EESTWConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration,
-                                   cor_comput=args.cor_comput)
-        model = EESTW(model_config)
-    elif args.model == 'SingleEncoderBVAE':
-        model_config = SingleEncoderBVAEConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    num_heads=data_config.num_heads,
-                                    abla_channel=data_config.abla_channel,
-                                    abla_vae=data_config.abla_vae,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration,
-                                   cor_comput=args.cor_comput)
-        model = SingleEncoderBVAE(model_config)
-    elif args.model == 'CVIB':
-        model_config = CVIBConfig(node_size=data_config.node_size,
-                                    num_classes=data_config.num_class,
-                                    num_heads=data_config.num_heads,
-                                    abla_channel=data_config.abla_channel,
-                                    abla_vae=data_config.abla_vae,
-                                    d_model=args.d_model,
-                                    num_layers=args.num_layers,
-                                    window_size=args.window_size,
-                                    window_stride=args.window_stride,
-                                    dynamic_length=args.dynamic_length,
-                                    sampling_init=args.sampling_init,
-                                    integration=args.integration,
-                                   cor_comput=args.cor_comput)
-        model = CVIB(model_config)
     elif args.model == 'SrCVIB':
         model_config = SrCVIBConfig(node_size=data_config.node_size,
                                     num_classes=data_config.num_class,
@@ -345,6 +253,21 @@ def init_model_config(args, data_config: DataConfig):
                                     integration=args.integration,
                                    cor_comput=args.cor_comput)
         model = SrCVIB(model_config)
+    elif args.model == 'VIB':
+        model_config = VIBConfig(node_size=data_config.node_size,
+                                    num_classes=data_config.num_class,
+                                    num_heads=data_config.num_heads,
+                                    abla_channel=data_config.abla_channel,
+                                    abla_vae=data_config.abla_vae,
+                                    d_model=args.d_model,
+                                    num_layers=args.num_layers,
+                                    window_size=args.window_size,
+                                    window_stride=args.window_stride,
+                                    dynamic_length=args.dynamic_length,
+                                    sampling_init=args.sampling_init,
+                                    integration=args.integration,
+                                   cor_comput=args.cor_comput)
+        model = VIB(model_config)
     elif args.model == 'AlzNetV3':
         model_config = AlzNetV3Config(node_size=data_config.node_size,
                                          num_classes=data_config.num_class)
