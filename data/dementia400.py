@@ -70,7 +70,7 @@ class Dementia400Dataset(BaseDataset):
         # self.all_data['tags'] = self.all_data['tags'][index]
 
 
-def dementia_preprocess(path="../data/Dementia100/", num=11, cut=55000, sample=1500):
+def dementia_preprocess(path="../data/Dementia100/", hz=250):
     time_series = pearson = labels = subject_ids = tags = None
 
     # minL = 999999
@@ -80,17 +80,14 @@ def dementia_preprocess(path="../data/Dementia100/", num=11, cut=55000, sample=1
         mat = sio.loadmat(os.path.join(AD_path, filename))
 
         data = mat['Value']
-        # minL = data.shape[1] if data.shape[1] < minL else minL
-        data = data[:, :cut]
-        data = data.reshape(data.shape[0], num, -1)
+        if data.shape[1] % (hz * 60) != 0:
+            data = data[:, :-(data.shape[1] % (hz * 60))]
+        data = data.reshape(data.shape[0], data.shape[1] // (hz * 60), -1)
         data = np.transpose(data, (1, 0, 2))
-        
-        indices = np.linspace(0, data.shape[-1] - 1, num=sample, dtype=int)
-        data = data[:, :, indices]
 
         corr = np.array([np.corrcoef(t) for t in data])
         
-        label = np.full(num, 0)
+        label = np.full(data.shape[0], 0)
 
         time_series = data if time_series is None else np.append(time_series, data, axis=0)
         pearson = corr if pearson is None else np.append(pearson, corr, axis=0)
@@ -99,22 +96,19 @@ def dementia_preprocess(path="../data/Dementia100/", num=11, cut=55000, sample=1
             else np.append(subject_ids, np.ones(label.shape[0]) * subject_id, axis=0)
 
     DSC_path = os.path.join(path, "DSC")
-    for filename in os.listdir(AD_path):
+    for filename in os.listdir(DSC_path):
         subject_id = int(re.findall(r'\d+', filename)[0])
-        mat = sio.loadmat(os.path.join(AD_path, filename))
+        mat = sio.loadmat(os.path.join(DSC_path, filename))
 
         data = mat['Value']
-        # minL = data.shape[1] if data.shape[1]< minL else minL
-        data = data[:, :cut]
-        data = data.reshape(data.shape[0], num, -1)
+        if data.shape[1] % (hz * 60) != 0:
+            data = data[:, :-(data.shape[1] % (hz * 60))]
+        data = data.reshape(data.shape[0], data.shape[1] // (hz * 60), -1)
         data = np.transpose(data, (1, 0, 2))
 
-        indices = np.linspace(0, data.shape[-1] - 1, num=sample, dtype=int)
-        data = data[:, :, indices]
-        
         corr = np.array([np.corrcoef(t) for t in data])
         
-        label = np.full(num, 1)
+        label = np.full(data.shape[0], 1)
 
         time_series = data if time_series is None else np.append(time_series, data, axis=0)
         pearson = corr if pearson is None else np.append(pearson, corr, axis=0)
@@ -123,22 +117,19 @@ def dementia_preprocess(path="../data/Dementia100/", num=11, cut=55000, sample=1
             else np.append(subject_ids, np.ones(label.shape[0]) * subject_id, axis=0)
     
     MCI_path = os.path.join(path, "MCI")
-    for filename in os.listdir(AD_path):
+    for filename in os.listdir(MCI_path):
         subject_id = int(re.findall(r'\d+', filename)[0])
-        mat = sio.loadmat(os.path.join(AD_path, filename))
+        mat = sio.loadmat(os.path.join(MCI_path, filename))
 
         data = mat['Value']
-        # minL = data.shape[1] if data.shape[1] < minL else minL
-        data = data[:, :cut]
-        data = data.reshape(data.shape[0], num, -1)
+        if data.shape[1] % (hz * 60) != 0:
+            data = data[:, :-(data.shape[1] % (hz * 60))]
+        data = data.reshape(data.shape[0], data.shape[1] // (hz * 60), -1)
         data = np.transpose(data, (1, 0, 2))
 
-        indices = np.linspace(0, data.shape[-1] - 1, num=sample, dtype=int)
-        data = data[:, :, indices]
-        
         corr = np.array([np.corrcoef(t) for t in data])
         
-        label = np.full(num, 2)
+        label = np.full(data.shape[0], 2)
 
         time_series = data if time_series is None else np.append(time_series, data, axis=0)
         pearson = corr if pearson is None else np.append(pearson, corr, axis=0)
@@ -153,17 +144,14 @@ def dementia_preprocess(path="../data/Dementia100/", num=11, cut=55000, sample=1
         mat = sio.loadmat(os.path.join(Nor_path, filename))
 
         data = mat['Value']
-        # minL = data.shape[1] if data.shape[1] < minL else minL
-        data = data[:, :cut]
-        data = data.reshape(data.shape[0], num, -1)
+        if data.shape[1] % (hz * 60) != 0:
+            data = data[:, :-(data.shape[1] % (hz * 60))]
+        data = data.reshape(data.shape[0], data.shape[1] // (hz * 60), -1)
         data = np.transpose(data, (1, 0, 2))
-        
-        indices = np.linspace(0, data.shape[-1] - 1, num=sample, dtype=int)
-        data = data[:, :, indices]
 
         corr = np.array([np.corrcoef(t) for t in data])
         
-        label = np.full(num, 3)
+        label = np.full(data.shape[0], 3)
 
         time_series = data if time_series is None else np.append(time_series, data, axis=0)
         pearson = corr if pearson is None else np.append(pearson, corr, axis=0)
@@ -183,4 +171,4 @@ def dementia_preprocess(path="../data/Dementia100/", num=11, cut=55000, sample=1
 
 
 if __name__ == '__main__':
-    dementia_preprocess("../data/Dementia400", num=3, cut=45000, sample=15000)
+    dementia_preprocess("../data/Dementia400", hz=250)
