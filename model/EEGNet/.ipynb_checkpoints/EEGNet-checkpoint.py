@@ -12,7 +12,7 @@ class EEGNetConfig(BaseConfig):
                  node_feature_size,
                  time_series_size,
                  num_classes,
-                 dropout=0.7,
+                 dropout=0.5,
                  frequency=128,
                  D=2,
                  num_kernels=8,
@@ -66,9 +66,9 @@ class EEGNet(nn.Module):
 
     def forward(self, time_series, labels):
         time_series = time_series.unsqueeze(1)
-        hidden_state = F.dropout(self.frequency_layer(time_series), p=0.7)
-        hidden_state = F.dropout(self.spatial_layer(hidden_state), p=0.7)
-        hidden_state = F.dropout(self.temporal_layer(hidden_state), p=0.7)
+        hidden_state = self.frequency_layer(time_series)
+        hidden_state = self.spatial_layer(hidden_state)
+        hidden_state = self.temporal_layer(hidden_state)
         # hidden_state = torch.max(hidden_state, dim=-1)[0]  # ZuCo
         hidden_state = hidden_state.reshape(hidden_state.size(0), -1)
         logits = F.softmax(self.fc(hidden_state), dim=1)

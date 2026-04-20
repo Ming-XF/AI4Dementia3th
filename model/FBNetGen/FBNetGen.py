@@ -2,8 +2,6 @@ import torch.nn.functional as F
 from .FBNetGenLayers import *
 from ..base import BaseConfig, ModelOutputs
 
-import pdb
-
 
 class FBNetGenConfig(BaseConfig):
     def __init__(self,
@@ -55,8 +53,7 @@ class FBNetGen(nn.Module):
 
         assert config.extractor_type in ['cnn', 'gru']
         assert config.graph_generation in ['linear', 'product']
-        # assert config.time_series_size % config.window_size == 0
-        # self.config = config
+        assert config.time_series_size % config.window_size == 0
 
         self.graph_generation = config.graph_generation
         if config.extractor_type == 'cnn':
@@ -80,8 +77,6 @@ class FBNetGen(nn.Module):
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
     def forward(self, time_series, node_feature, labels):
-        # pdb.set_trace()
-        # x = time_series[:, :, :-(self.config.time_series_size % self.config.window_size)]
         x = self.extract(time_series)               # [batch_sz, node_sz, embedding_size]
         x = F.softmax(x, dim=-1)                    # [batch_sz, node_sz, embedding_size]
         m = self.emb2graph(x)                       # [batch_sz, node_sz, node_sz, 1]

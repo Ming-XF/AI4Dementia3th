@@ -12,9 +12,9 @@ class LMDAConfig(BaseConfig):
                  node_feature_size,
                  time_series_size,
                  num_classes,
-                 depth=18,
-                 channel_depth1=48,
-                 channel_depth2=18,
+                 depth=9,
+                 channel_depth1=24,
+                 channel_depth2=9,
                  ave_depth=1,
                  avepool=5):
         super(LMDAConfig, self).__init__(node_size=node_size,
@@ -70,23 +70,19 @@ class LMDA(nn.Module):
         self.time_conv = nn.Sequential(
             nn.Conv2d(config.depth, config.channel_depth1, kernel_size=(1, 1), groups=1, bias=False),
             nn.BatchNorm2d(config.channel_depth1),
-            nn.Dropout(p=0.7),
             nn.Conv2d(config.channel_depth1, config.channel_depth1, kernel_size=(1, 75),
                       groups=config.channel_depth1, bias=False),
             nn.BatchNorm2d(config.channel_depth1),
             nn.GELU(),
-            nn.Dropout(p=0.65),
         )
         # self.avgPool1 = nn.AvgPool2d((1, 24))
         self.chanel_conv = nn.Sequential(
             nn.Conv2d(config.channel_depth1, config.channel_depth2, kernel_size=(1, 1), groups=1, bias=False),
             nn.BatchNorm2d(config.channel_depth2),
-            nn.Dropout(p=0.7),
             nn.Conv2d(config.channel_depth2, config.channel_depth2, kernel_size=(config.node_size, 1),
                       groups=config.channel_depth2, bias=False),
             nn.BatchNorm2d(config.channel_depth2),
             nn.GELU(),
-            nn.Dropout(p=0.65),
         )
 
         self.norm = nn.Sequential(
