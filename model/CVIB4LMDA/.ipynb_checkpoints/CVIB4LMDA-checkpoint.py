@@ -63,7 +63,9 @@ class CVIB4LMDA(nn.Module):
         self.num_classes = config.num_classes
         
         # self.bnc = BrainNetCNN(config.node_size, config.d_model)
-        self.lmda = LMDA(config.node_size, 129, config.d_model)
+        self.lmda = LMDA(config.node_size, 3750, config.d_model)
+        # C42B 129
+        # Dementia400 3750
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
         
@@ -81,6 +83,7 @@ class CVIB4LMDA(nn.Module):
         mu3, rl3, kl3 = self.vae3(time_series, r_mu, r_logvar)
 
         z = mu1 + mu2 + mu3
+        # pdb.set_trace()
             
         # out = self.bnc(adj)
         out = self.lmda(z)
@@ -89,8 +92,8 @@ class CVIB4LMDA(nn.Module):
         
         logit_loss = self.loss_fn(logits, labels)
 
-        vae_loss = rl1 + rl2 + rl3
-        # vae_loss = kl1 + kl2 + kl3 + rl1 + rl2 + rl3
+        # vae_loss = rl1 + rl2 + rl3
+        vae_loss = kl1 + kl2 + kl3 + rl1 + rl2 + rl3
         
         loss = logit_loss + (self.last_logit_loss.detach() / self.last_vae_loss.detach()) * vae_loss
 

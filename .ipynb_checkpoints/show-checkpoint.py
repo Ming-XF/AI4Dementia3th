@@ -51,6 +51,11 @@ elif args.type == "C42B":
     OUTPUT_HTML = 'model_metrics_comparison_C42B.html'
     DATASET = "C42B"
     metrix = "auc"
+elif args.type == "Beirut":
+    OUTPUT_IMG = 'multi_model_metrics_Beirut.png'
+    OUTPUT_HTML = 'model_metrics_comparison_Beirut.html'
+    DATASET = "Beirut"
+    metrix = "auc"
 else:
     print("未找到数据集")
     sys.exit(0)
@@ -234,8 +239,8 @@ def parse_log(path):
     prec_pattern = re.compile(r'Precision: ([\d.]+)')
     recall_pattern = re.compile(r'Recall: ([\d.]+)')
     fscore_pattern = re.compile(r'F_score: ([\d.]+)')
-    test_loss_pattern = re.compile(r'Loss: ([\d.]+)')
-    train_loss_pattern = re.compile(r'Train loss: ([\d.]+)')
+    # test_loss_pattern = re.compile(r'Loss: ([\d.]+)')
+    # train_loss_pattern = re.compile(r'Train loss: ([\d.]+)')
 
     # 按 Repeat 分割
     train_blocks = ''.join(lines).split('########## Repeat:')[1:]  # 去掉开头的空字符串
@@ -249,12 +254,12 @@ def parse_log(path):
         precs = [float(m) for m in prec_pattern.findall(block)]
         recalls = [float(m) for m in recall_pattern.findall(block)]
         fscores = [float(m) for m in fscore_pattern.findall(block)]
-        test_losses = [float(m) for m in test_loss_pattern.findall(block)]
-        train_losses = [float(m) for m in train_loss_pattern.findall(block)]
+        # test_losses = [float(m) for m in test_loss_pattern.findall(block)]
+        # train_losses = [float(m) for m in train_loss_pattern.findall(block)]
 
         # 动态确定epoch数量，取所有指标列表的最小长度
         num_epochs = min(len(aucs), len(accs), len(precs), len(recalls), 
-                         len(fscores), len(test_losses), len(train_losses))
+                         len(fscores))
         
         if num_epochs == 0:
             print(f"警告: {path} 中某个训练块没有找到任何指标")
@@ -267,8 +272,8 @@ def parse_log(path):
             'precision': precs[i],
             'recall': recalls[i],
             'f_score': fscores[i],
-            'test_loss': test_losses[i],
-            'train_loss': train_losses[i]
+            # 'test_loss': test_losses[i],
+            # 'train_loss': train_losses[i]
         } for i in range(num_epochs)]
         
         # 找到当前训练中具有最大相关指标的epoch
@@ -284,8 +289,8 @@ def parse_log(path):
 
 model_data1 = {}
 model_data2 = {}
-metrics = ['auc', 'accuracy', 'precision', 'recall', 'f_score', 'test_loss', 'train_loss']
-labels = ['AUC', 'Accuracy', 'Precision', 'Recall', 'F-score', 'Test-loss', 'Train-loss']
+metrics = ['auc', 'accuracy', 'precision', 'recall', 'f_score']
+labels = ['AUC', 'Accuracy', 'Precision', 'Recall', 'F-score']
 
 for fname in os.listdir(LOG_DIR):
     if not fname.endswith(DATASET+'.log'):

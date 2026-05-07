@@ -83,8 +83,9 @@ class SrCVIB(nn.Module):
 
         # self.lossWeight = UncertaintyWeighting(3)
         
-        self.last_logit_loss = torch.tensor(1, device='cuda')
-        self.last_vae_loss = torch.tensor(1000000, device='cuda')
+        # self.last_logit_loss = torch.tensor(1, device='cuda')
+        # self.last_vae_loss = torch.tensor(1000000, device='cuda')
+        self.vae_alpha = 1e-3
 
     def forward(self, time_series, node_feature, labels, r_mu, r_logvar, train):
         
@@ -128,8 +129,10 @@ class SrCVIB(nn.Module):
             vae_loss = rl1 + rl2 + rl3
         else:
             vae_loss = rl1 + rl2 + rl3 + kl1 + kl2 + kl3
-        
-        loss = logit_loss + (self.last_logit_loss.detach() / self.last_vae_loss.detach()) * vae_loss
+
+        # pdb.set_trace()
+        # loss = logit_loss + (self.last_logit_loss.detach() / self.last_vae_loss.detach()) * vae_loss
+        loss = logit_loss + self.vae_alpha * vae_loss
 
         # losses = [logit_loss, kl, rl]
         # loss = self.lossWeight(losses)

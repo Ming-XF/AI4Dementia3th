@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 import torch
 from nilearn import connectome
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, StratifiedGroupKFold
 from torch.utils.data import Dataset
 
 from .data_config import DataConfig
@@ -14,7 +14,7 @@ class BaseDataset(Dataset):
         self.data_config = data_config
         self.train = train
         if data_config.n_splits-1:
-            self.k_fold = StratifiedKFold(n_splits=data_config.n_splits, shuffle=True, random_state=42)
+            self.k_fold = StratifiedGroupKFold(n_splits=data_config.n_splits, shuffle=True, random_state=42)
         else:
             self.k_fold = None
         self.k = k

@@ -188,6 +188,7 @@ class VAE(nn.Module):
         self.d_model = d_model
         
         # 编码器
+        # C42B
         self.encoder = nn.Sequential(
             nn.Conv1d(1, channel1, kernel_size=3, stride=2, padding=1),
             nn.BatchNorm1d(channel1),
@@ -211,6 +212,7 @@ class VAE(nn.Module):
         self.fc_logvar = nn.Linear(d_model, d_model)
         
         # 解码器
+        #C42B
         self.decoder = nn.Sequential(
             # nn.ConvTranspose1d(d_model, channel3,  kernel_size=3, stride=2, padding=1, output_padding=1),
             # nn.BatchNorm1d(channel3),
