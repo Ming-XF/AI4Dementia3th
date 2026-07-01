@@ -1,0 +1,70 @@
+06/25/2026 10:33:13 - INFO - __main__ -   ########## Repeat:0 ##########
+06/25/2026 10:33:13 - INFO - utils.trainer -   ***** Running training *****
+06/25/2026 10:33:13 - INFO - utils.trainer -     Num examples = 19
+06/25/2026 10:33:13 - INFO - utils.trainer -     Num Epochs = 200
+06/25/2026 10:33:13 - INFO - utils.trainer -     Total train batch size = 16
+06/25/2026 10:33:13 - INFO - utils.trainer -     warmup steps = 400
+06/25/2026 10:33:13 - INFO - utils.trainer -     Total optimization steps = 3800
+06/25/2026 10:33:13 - INFO - utils.trainer -     Save steps = 200
+06/25/2026 10:33:13 - INFO - root -   Parameters [normal] length [18]
+06/25/2026 10:33:15 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:16 - INFO - utils.trainer -   AUC: 0.50786
+06/25/2026 10:33:16 - INFO - utils.trainer -   Accuracy: 0.30573
+06/25/2026 10:33:16 - INFO - utils.trainer -   Precision: 0.28396
+06/25/2026 10:33:16 - INFO - utils.trainer -   Recall: 0.30070
+06/25/2026 10:33:16 - INFO - utils.trainer -   F_score: 0.28037
+06/25/2026 10:33:16 - INFO - utils.trainer -   Loss: 1.39674
+06/25/2026 10:33:16 - INFO - utils.trainer -    Train loss: 1.40091, Test loss: 1.39674,Epoch time = 1.925s
+06/25/2026 10:33:16 - INFO - utils.trainer -   Saving model checkpoint to output_dir/BrainNetCNN
+06/25/2026 10:33:18 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:19 - INFO - utils.trainer -   AUC: 0.55209
+06/25/2026 10:33:19 - INFO - utils.trainer -   Accuracy: 0.30573
+06/25/2026 10:33:19 - INFO - utils.trainer -   Precision: 0.28205
+06/25/2026 10:33:19 - INFO - utils.trainer -   Recall: 0.29425
+06/25/2026 10:33:19 - INFO - utils.trainer -   F_score: 0.26582
+06/25/2026 10:33:19 - INFO - utils.trainer -   Loss: 1.37318
+06/25/2026 10:33:19 - INFO - utils.trainer -    Train loss: 1.38711, Test loss: 1.37318,Epoch time = 1.686s
+06/25/2026 10:33:19 - INFO - utils.trainer -   Saving model checkpoint to output_dir/BrainNetCNN
+06/25/2026 10:33:21 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:22 - INFO - utils.trainer -   AUC: 0.60103
+06/25/2026 10:33:22 - INFO - utils.trainer -   Accuracy: 0.33758
+06/25/2026 10:33:22 - INFO - utils.trainer -   Precision: 0.33063
+06/25/2026 10:33:22 - INFO - utils.trainer -   Recall: 0.33038
+06/25/2026 10:33:22 - INFO - utils.trainer -   F_score: 0.31554
+06/25/2026 10:33:22 - INFO - utils.trainer -   Loss: 1.34165
+06/25/2026 10:33:22 - INFO - utils.trainer -    Train loss: 1.33585, Test loss: 1.34165,Epoch time = 1.660s
+06/25/2026 10:33:22 - INFO - utils.trainer -   Saving model checkpoint to output_dir/BrainNetCNN
+06/25/2026 10:33:24 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:25 - INFO - utils.trainer -   AUC: 0.64002
+06/25/2026 10:33:25 - INFO - utils.trainer -   Accuracy: 0.33121
+06/25/2026 10:33:25 - INFO - utils.trainer -   Precision: 0.29119
+06/25/2026 10:33:25 - INFO - utils.trainer -   Recall: 0.31016
+06/25/2026 10:33:25 - INFO - utils.trainer -   F_score: 0.25820
+06/25/2026 10:33:25 - INFO - utils.trainer -   Loss: 1.28817
+06/25/2026 10:33:25 - INFO - utils.trainer -    Train loss: 1.24764, Test loss: 1.28817,Epoch time = 1.803s
+06/25/2026 10:33:27 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:28 - INFO - utils.trainer -   AUC: 0.64798
+06/25/2026 10:33:28 - INFO - utils.trainer -   Accuracy: 0.41401
+06/25/2026 10:33:28 - INFO - utils.trainer -   Precision: 0.40530
+06/25/2026 10:33:28 - INFO - utils.trainer -   Recall: 0.40286
+06/25/2026 10:33:28 - INFO - utils.trainer -   F_score: 0.39144
+06/25/2026 10:33:28 - INFO - utils.trainer -   Loss: 1.35586
+06/25/2026 10:33:28 - INFO - utils.trainer -    Train loss: 1.09917, Test loss: 1.35586,Epoch time = 1.729s
+06/25/2026 10:33:28 - INFO - utils.trainer -   Saving model checkpoint to output_dir/BrainNetCNN
+06/25/2026 10:33:30 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:31 - INFO - utils.trainer -   AUC: 0.64246
+06/25/2026 10:33:31 - INFO - utils.trainer -   Accuracy: 0.35669
+06/25/2026 10:33:31 - INFO - utils.trainer -   Precision: 0.33731
+06/25/2026 10:33:31 - INFO - utils.trainer -   Recall: 0.34508
+06/25/2026 10:33:31 - INFO - utils.trainer -   F_score: 0.33883
+06/25/2026 10:33:31 - INFO - utils.trainer -   Loss: 1.27741
+06/25/2026 10:33:31 - INFO - utils.trainer -    Train loss: 0.97468, Test loss: 1.27741,Epoch time = 1.766s
+06/25/2026 10:33:32 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****
+06/25/2026 10:33:34 - INFO - utils.trainer -   AUC: 0.63288
+06/25/2026 10:33:34 - INFO - utils.trainer -   Accuracy: 0.40127
+06/25/2026 10:33:34 - INFO - utils.trainer -   Precision: 0.40924
+06/25/2026 10:33:34 - INFO - utils.trainer -   Recall: 0.39490
+06/25/2026 10:33:34 - INFO - utils.trainer -   F_score: 0.39981
+06/25/2026 10:33:34 - INFO - utils.trainer -   Loss: 1.36210
+06/25/2026 10:33:34 - INFO - utils.trainer -    Train loss: 0.89838, Test loss: 1.36210,Epoch time = 1.680s
+06/25/2026 10:33:35 - INFO - utils.trainer -   ***** Running evaluation on test0 dataset *****

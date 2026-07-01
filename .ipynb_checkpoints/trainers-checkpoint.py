@@ -732,6 +732,10 @@ class GCDGCNTrainer(Trainer):
             self.test_result = self.evaluate()
             msg = f"Epoch: {epoch}, Train loss: {train_loss:.5f}, Test loss: {self.test_result['Loss']:.5f}," \
                   f"Epoch time = {(end_time - start_time):.3f}s"
+
+            if self.best_result is None or self.best_result['F_score'] <= self.test_result['F_score']:
+                self.best_result = self.test_result
+                self.save_model()
             print(msg)
             logger.info(msg)
 

@@ -14,7 +14,7 @@ class BaseDataset(Dataset):
         self.data_config = data_config
         self.train = train
         if data_config.n_splits-1:
-            self.k_fold = StratifiedGroupKFold(n_splits=data_config.n_splits, shuffle=True, random_state=42)
+            self.k_fold = StratifiedKFold(n_splits=data_config.n_splits, shuffle=True, random_state=42)
         else:
             self.k_fold = None
         self.k = k
